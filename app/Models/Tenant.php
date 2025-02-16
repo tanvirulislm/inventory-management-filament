@@ -34,4 +34,8 @@ class Tenant extends Model
     public function Products(){
         return $this->hasMany(Product::class);
     }
+
+    public function purchases(){
+        return $this->hasMany(Purchase::class);
+    }
 }

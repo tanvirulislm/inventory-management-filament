@@ -9,6 +9,7 @@ use App\Models\Tenant;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Http\Middleware\Authenticate;
+use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -62,6 +63,15 @@ class AdminPanelProvider extends PanelProvider
             ->tenant(Tenant::class)
             ->authMiddleware([
                 Authenticate::class,
+            ])
+            ->plugins([
+                BreezyCore::make()
+                ->myProfile(
+
+                )
+                ->enableTwoFactorAuthentication(
+                    force: false
+                )
             ]);
     }
 }

@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\PurchaseResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\PurchaseResource\RelationManagers;
+use App\Filament\Resources\PurchaseResource\RelationManagers\ProductsRelationManager;
 use Filament\Facades\Filament;
 
 class PurchaseResource extends Resource
@@ -55,7 +56,7 @@ class PurchaseResource extends Resource
                     ->label('Purchase Date'),
                 ])->columns(3),
                 Forms\Components\Section::make()->schema([
-                    Forms\Components\Repeater::make('Product Details')
+                    Forms\Components\Repeater::make('product')
                     ->columns(4)->schema([
                     Forms\Components\Select::make('product_id')
                     ->options(function(){
@@ -81,11 +82,7 @@ class PurchaseResource extends Resource
                         ->label('Price')
                         ->reactive()
                         ->debounce(500)
-                        ->afterStateUpdated(function(callable $get, Set $set) {
-                            $price = intval($get('price'));
-                            $quantity = intval($get('quantity'));
-                            $set('total', $price * $quantity);
-                        }),
+                        ->afterStateUpdated(fn(Callable $get, Set $set)=>self::getFormData($get, $set)),
 
                     Forms\Components\TextInput::make('quantity')
                         ->required()
@@ -93,11 +90,7 @@ class PurchaseResource extends Resource
                         ->label('Quantity')
                         ->reactive()
                         ->debounce(500)
-                        ->afterStateUpdated(function(callable $get, Set $set) {
-                            $price = intval($get('price'));
-                            $quantity = intval($get('quantity'));
-                            $set('total', $price * $quantity);
-                        }),
+                        ->afterStateUpdated(fn(Callable $get, Set $set)=>self::getFormData($get, $set)),
 
                     Forms\Components\TextInput::make('total')
                         ->required()
@@ -107,6 +100,31 @@ class PurchaseResource extends Resource
                     ])
 
                 ]),
+                Forms\Components\Section::make()->schema([
+                    Forms\Components\TextInput::make('subtotal')
+                    ->required()
+                    ->numeric()
+                    ->afterStateUpdated(function (Callable $get, Set $set){
+                        $discount = $get('discount') ?? 0;
+                        $subtotal = $get('subtotal') ?? 0;
+                        $set('grand_total', $subtotal - $discount);
+                    }),
+                    Forms\Components\TextInput::make('discount')
+                    ->default(0)
+                    ->prefix("$")
+                    ->required()
+                    ->reactive()
+                    ->debounce(500)
+                    ->afterStateUpdated(function (Callable $get, Set $set){
+                        $discount = $get('discount') ?? 0;
+                        $subtotal = $get('subtotal') ?? 0;
+                        $set('grand_total', $subtotal - $discount);
+                    })
+                    ->numeric(),
+                    Forms\Components\TextInput::make('grand_total')
+                    ->numeric()
+                    ->required(),
+                ])->columns(3),
             ]);
     }
 
@@ -114,13 +132,32 @@ class PurchaseResource extends Resource
     {
         return $table
             ->columns([
-                //
+                Tables\Columns\TextColumn::make('invoice_no')
+                ->searchable()
+                ->sortable()
+                ->label('Invoice No'),
+                Tables\Columns\TextColumn::make('provider.name')
+                ->searchable()
+                ->sortable()
+                ->label('Provider'),
+                Tables\Columns\TextColumn::make('purchase_date')
+                ->searchable()
+                ->sortable()
+                ->label('Purchase Date'),
+                Tables\Columns\TextColumn::make('total')
+                ->searchable()
+                ->sortable()
+                ->label('Grand Total'),
             ])
             ->filters([
                 //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('view_invoice')
+                ->label('View Invoice')
+                ->icon('heroicon-o-document-text')
+                ->url(fn($record) => self::getUrl('invoice', ['record' => $record->id])),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -132,7 +169,7 @@ class PurchaseResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            ProductsRelationManager::make()
         ];
     }
 
@@ -142,6 +179,26 @@ class PurchaseResource extends Resource
             'index' => Pages\ListPurchases::route('/'),
             'create' => Pages\CreatePurchase::route('/create'),
             'edit' => Pages\EditPurchase::route('/{record}/edit'),
+            'invoice' => Pages\Invoice::route('/{record}/invoice'),
         ];
+    }
+
+    public static function getFormData($get, $set){
+
+        $formData = $get('../../');
+        $allProducts = $formData['product'] ?? [];
+        $subtotal = 0;
+        foreach($allProducts as $product){
+            $price = $product['price'] ?? 0;
+            $quantity = $product['quantity'] ?? 0;
+            $total = $price * $quantity;
+            $subtotal += $total;
+        }
+        $price = intval($get('price'));
+        $quantity = intval($get('quantity'));
+        $set('total', $price * $quantity);
+        $set('../../subtotal', $subtotal);
+        $discount = $get('../../discount');
+        $set('../../grand_total', $subtotal - $discount);
     }
 }
