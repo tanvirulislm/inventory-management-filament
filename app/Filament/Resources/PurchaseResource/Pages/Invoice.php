@@ -17,17 +17,17 @@ class Invoice extends Page
     public function mount($record): void
     {
         $this->record = $record;
-        $this->purchase = Purchase::with(['provider', 'product'])->find($record);
+        $this->purchase = Purchase::with(['provider', 'product'])->findOrFail($record);
     }
 
     protected function getHeaderActions(): array
     {
         return [
             Action::make('print')
-            ->icon('heroicon-o-printer')
-            ->label('Print')
-            ->requiresConfirmation()
-            ->url(route('print.purchase_invoice',['id'=>$this->record])),
+                ->icon('heroicon-o-printer')
+                ->label('Print')
+                ->requiresConfirmation()
+                ->url(fn () => route('print.purchase_invoice', ['id' => $this->record])),
         ];
     }
 

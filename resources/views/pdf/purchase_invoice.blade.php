@@ -1,33 +1,141 @@
-<x-filament-panels::page>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Purchase From {{$purchase->provider?->name}}</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
+            background-color: #f3f4f6;
+        }
         .main-page {
             max-width: 800px;
-            padding: 40px
+            padding: 32px;
+            margin: 40px auto 0;
+            background-color: white;
+            border-radius: 8px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .header h1 {
+            font-size: 30px;
+            font-weight: 700;
+            margin: 0;
+        }
+        .invoice-details {
+            margin-top: 24px;
+        }
+        .billing-section {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            margin-top: 24px;
+        }
+        .billing-box {
+            margin-top: 24px;
+        }
+        .billing-box h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .billing-box p {
+            margin: 4px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 24px;
+            border: 1px solid #e5e7eb;
+        }
+        thead tr {
+            background-color: #1f2937;
+        }
+        th {
+            padding: 12px 16px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-align: left;
+            border: 1px solid #e5e7eb;
+            color: #f3f4f6;
+        }
+        td {
+            padding: 16px;
+            border: 1px solid #e5e7eb;
+        }
+        .text-right {
+            text-align: right;
+        }
+        tr.border-t {
+            border-top: 1px solid #d1d5db;
+        }
+        tr.total-row {
+            background-color: #f9fafb;
+            font-weight: 700;
+        }
+        tr.total-row td {
+            font-size: 20px;
+            color: #374151;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 24px;
+        }
+        .footer p {
+            color: #4b5563;
+            margin: 8px 0;
+        }
+        .footer a {
+            color: #3b82f6;
+            text-decoration: underline;
+        }
+        tr:hover {
+            background-color: #f9fafb;
+        }
+        .text-gray {
+            color: #4b5563;
+        }
+        .font-medium {
+            font-weight: 500;
+        }
+        .text-xl {
+            font-size: 20px;
         }
     </style>
-    <div class="main-page container mx-auto p-8 bg-white shadow-md rounded-lg mt-10">
-        <div class="flex justify-between items-center mb-6">
+</head>
+<body>
+    <div class="main-page">
+        <div class="header">
             <div>
-                <h1 class="text-3xl font-bold">Invoice</h1>
+                <h1>Invoice</h1>
             </div>
             <div>
                 <img src="https://laravel.com/assets/img/laravel-logo.svg" alt="Company Logo">
             </div>
         </div>
 
-        <div class="mt-6">
+        <div class="invoice-details">
             <p>Invoice No: {{$purchase->invoice_no}}</p>
             <p>Date: {{$purchase->purchase_date}}</p>
         </div>
-        <div class="flex justify-between">
-            <div class="mt-6">
-                <h2 class="text-xl font-semibold mb-2">Billed From</h2>
+
+        <div class="billing-section">
+            <div class="billing-box">
+                <h2>Billed From</h2>
                 <p>{{$purchase->provider?->name}}</p>
                 <p>{{$purchase->provider?->address}}</p>
                 <p>Email: {{$purchase->provider?->email}}</p>
             </div>
-            <div class="mt-6">
-                <h2 class="text-xl font-semibold mb-2">Company</h2>
+            <div class="billing-box">
+                <h2>Company</h2>
                 <p>Your Company</p>
                 <p>123 Main Street</p>
                 <p>Anytown, CA 91234</p>
@@ -35,43 +143,51 @@
             </div>
         </div>
 
-        <table class="w-full border-collapse mt-6 table-auto border">  <thead>
-            <tr class="bg-gray-800">
-                <th class="py-3 px-4 font-medium text-primary uppercase tracking-wider text-left border">Product Name</th>  <th class="py-3 px-4 font-medium text-primary uppercase tracking-wider text-right border">Quantity</th>  <th class="py-3 px-4 font-medium text-primary uppercase tracking-wider text-right border">Unit Price</th>  <th class="py-3 px-4 font-medium text-primary uppercase tracking-wider text-right border">Total</th>  </tr>
-        </thead>
-        <tbody>
-
-
-            @if ($purchase && $purchase->product)
-            @foreach ($purchase->product as $product)
-                <tr class="border-b border-gray-200 hover:bg-gray-50">
-                    <td class="py-4 px-4 text-left border">{{ $product->product->name ?? 'N/A' }}</td>
-                    <td class="py-4 px-4 text-right border">{{ $product->quantity }}</td>
-                    <td class="py-4 px-4 text-right border">${{ $product->price }}</td>
-                    <td class="py-4 px-4 text-right border">${{ number_format($product->price * $product->quantity, 2) }}</td>
-                </tr>
-            @endforeach
-            @else
+        <table>
+            <thead>
                 <tr>
-                    <td colspan="4" class="py-4 px-4 text-center border">No products found for this purchase.</td>
+                    <th>Product Name</th>
+                    <th class="text-right">Quantity</th>
+                    <th class="text-right">Unit Price</th>
+                    <th class="text-right">Total</th>
                 </tr>
-            @endif
+            </thead>
+            <tbody>
+                @if ($purchase && $purchase->product)
+                    @foreach ($purchase->product as $product)
+                        <tr>
+                            <td>{{ $product->product->name ?? 'N/A' }}</td>
+                            <td class="text-right">{{ $product->quantity }}</td>
+                            <td class="text-right">${{ $product->price }}</td>
+                            <td class="text-right">${{ number_format($product->price * $product->quantity, 2) }}</td>
+                        </tr>
+                    @endforeach
+                @else
+                    <tr>
+                        <td colspan="4" style="text-align: center;">No products found for this purchase.</td>
+                    </tr>
+                @endif
 
+                <tr class="border-t">
+                    <td colspan="3" class="text-right font-medium text-gray">Subtotal:</td>
+                    <td class="text-right text-gray">${{$purchase->total}}</td>
+                </tr>
+                <tr>
+                    <td colspan="3" class="text-right font-medium text-gray">Discount:</td>
+                    <td class="text-right text-gray">${{$purchase->discount}}</td>
+                </tr>
+                <tr class="total-row">
+                    <td colspan="3" class="text-right text-xl">Total:</td>
+                    <td class="text-right">${{$purchase->total - $purchase->discount}}</td>
+                </tr>
+            </tbody>
+        </table>
 
-            <tr class="border-t border-gray-300">
-                <td colspan="3" class="py-3 px-4 font-medium text-right text-gray-700 border">Subtotal:</td>  <td class="py-3 px-4 text-right text-gray-700 border">${{$purchase->total}}</td>  </tr>
-            <tr>
-                <td colspan="3" class="py-3 px-4 font-medium text-right text-gray-700 border">Discount:</td>  <td class="py-3 px-4 text-right text-gray-700 border">${{$purchase->discount}}</td>  </tr>
-            <tr class="font-bold bg-gray-100">
-                <td colspan="3" class="py-3 px-4 text-xl text-right text-gray-700 border">Total:</td>  <td class="py-3 px-4 text-xl text-right text-gray-700 border">${{$purchase->total - $purchase->discount}}</td>  </tr>
-        </tbody>
-    </table>
-
-
-    <div class="text-center mt-6">
-        <p class="text-gray-600">Thank you for your business!</p>
-        <p class="text-gray-600 mt-2">Payment terms: Due upon receipt. We accept Visa, Mastercard, and bank transfers.</p>
-        <p class="text-gray-600 mt-2">For full terms and conditions, please visit: <a href="[your website URL]" class="text-blue-500 underline">[your website URL]</a></p>
+        <div class="footer">
+            <p>Thank you for your business!</p>
+            <p>Payment terms: Due upon receipt. We accept Visa, Mastercard, and bank transfers.</p>
+            <p>For full terms and conditions, please visit: <a href="[your website URL]">[your website URL]</a></p>
+        </div>
     </div>
-    </div>
-</x-filament-panels::page>
+</body>
+</html>

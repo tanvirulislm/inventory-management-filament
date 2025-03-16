@@ -12,7 +12,7 @@ class InvoiceRecord extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function purchase_id(){
+    public function purchase(){
         return $this->belongsTo(Purchase::class);
     }
 }

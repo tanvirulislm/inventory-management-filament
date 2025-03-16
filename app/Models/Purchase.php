@@ -19,4 +19,8 @@ class Purchase extends Model
     public function product(){
         return $this->hasMany(PurchaseProduct::class);
     }
+
+    public function invoiceRecords(){
+        return $this->hasMany(InvoiceRecord::class);
+    }
 }
